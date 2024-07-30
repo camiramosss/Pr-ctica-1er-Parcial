@@ -454,3 +454,134 @@ personasMayores personas = filter (\persona -> edad persona > 18) personas
 
 quienesSuperanNMonto personas n = filter (\persona -> sueldo persona > n) personas
 -}
+
+
+--1--
+data Autor = Autor {
+    nombreAutor :: String,
+    obras :: [Obra]
+} deriving (Show, Eq)
+
+data Obra = Obra {
+    nombreObra :: String,
+    contenido :: String,
+    publicacion :: Number
+} deriving (Show, Eq)
+
+obraA :: Obra
+obraA = Obra "Había una vez un pato." "texto de habia una vez un pato" 1997
+
+obraB :: Obra
+obraB = Obra "¡Habia una vez un pato!" "texto de habia una vez un pato 2" 1996
+
+obraC :: Obra
+obraC = Obra "Mirtha, Susana y Moria" "texto de mirta, susana y moria" 2010
+
+obraD :: Obra
+obraD = Obra "La semántica funcional del amoblamiento vertebral es riboficiente" "texto de la semántica funcional del amoblamiento vertebral es riboficiente" 2020
+
+obraE :: Obra
+obraE = Obra "La semántica funcional de Mirtha, Susana y Moria." "texto de la semántica funcional de Mirtha, Susana y Moria." 2022
+
+--2--
+esLetra :: Char -> Bool
+esLetra caracter = elem caracter ['a' .. 'z'] || elem caracter ['A' .. 'Z'] || elem caracter ['Á' .. 'Ú'] || elem caracter ['á' .. 'ú']
+
+esNumero :: Char -> Bool
+esNumero caracter = elem caracter ['0' .. '9']
+
+esEspacio :: Char -> Bool
+esEspacio caracter = elem caracter [' ']
+
+palabraSinTildes :: String -> String
+palabraSinTildes palabra = map letraSinTilde palabra
+
+letraSinTilde :: Char -> Char
+letraSinTilde letra
+ | letra == 'á' = 'a'
+ | letra == 'é' = 'e'
+ | letra == 'í' = 'i'
+ | letra == 'ó' = 'o'
+ | letra == 'ú' = 'u'
+ | otherwise = letra
+
+esLetraONumeroOEspacio :: Char -> Bool
+esLetraONumeroOEspacio caracter = (esLetra caracter) || (esNumero caracter) || (esEspacio caracter)
+
+versionCruda :: Obra -> Obra
+versionCruda obra = obra {nombreObra = filter esLetraONumeroOEspacio (palabraSinTildes (nombreObra obra))}
+
+--3--
+esCopiaLiteral :: TipoDePlagio
+esCopiaLiteral obra1 obra2 = versionCruda obra2 == versionCruda obra1
+
+empiezaIgual :: Number -> TipoDePlagio
+empiezaIgual n obra1 obra2 = take n (nombreObra obra2) == take n (nombreObra obra1)
+
+noEmpiezaIgual :: Number -> TipoDePlagio
+noEmpiezaIgual n obra1 obra2 = not (empiezaIgual n obra1 obra2)
+
+leAgregaronInfo :: TipoDePlagio
+leAgregaronInfo obra1 obra2 = noEmpiezaIgual (length (nombreObra obra2)) obra1 obra2 && empiezaIgual (length (nombreObra obra2) - length (nombreObra obra1)) obra1 obra2
+
+mismaCantidadDeLetras :: Obra -> Obra -> Bool
+mismaCantidadDeLetras obra1 obra2 = length (nombreObra obra1) == length (nombreObra obra2)
+
+mismaCantidadDeLetrasLambda :: TipoDePlagio
+mismaCantidadDeLetrasLambda obra1 obra2 = (\nombre1 nombre2 -> length nombre1 == length nombre2) (nombreObra obra1) (nombreObra obra2)
+
+type TipoDePlagio = Obra -> Obra -> Bool
+
+--4--
+data Bot = Bot {
+    plagiosQueDetecta :: [TipoDePlagio],
+    fabricante :: String
+} deriving (Show, Eq)
+
+botA :: Bot
+botA = Bot [esCopiaLiteral, empiezaIgual 10] "Fabricante A"
+
+botB :: Bot
+botB = Bot [leAgregaronInfo, mismaCantidadDeLetrasLambda] "Fabricante B"
+
+--5--
+detectaPlagio :: Obra -> Obra -> TipoDePlagio -> Bool
+detectaPlagio obra1 obra2 plagio = plagio obra1 obra2 && publicacion obra1 > publicacion obra2
+
+botDetectaPlagio :: Bot -> Obra -> Obra -> Bool
+botDetectaPlagio bot obra1 obra2 = any (detectaPlagio obra1 obra2) (plagiosQueDetecta bot)
+
+--6--
+-- si una obra es plagio de alguna de las obras del autor
+obraPlagioAlAutor :: Bot -> Autor -> Obra -> Bool
+obraPlagioAlAutor bot autor obraCopia = any (botDetectaPlagio bot obraCopia) (obras autor)
+
+--si un autor hizo plagio a otro:
+autorPlagioAlOtroAutor :: Bot -> Autor -> Autor -> Bool
+autorPlagioAlOtroAutor bot autor1 autor2 = any (obraPlagioAlAutor bot autor1) (obras autor2)
+
+esCadenaDePlagiadores :: [Autor] -> Bot -> Bool
+esCadenaDePlagiadores [] _ = False
+esCadenaDePlagiadores (autor1:autor2:restoDeAutores) bot = autorPlagioAlOtroAutor bot autor1 autor2 && esCadenaDePlagiadores (autor2:restoDeAutores) bot
+
+--7--
+aCuantosPlagioUnAutor :: Bot -> Autor -> [Autor] -> Number
+aCuantosPlagioUnAutor bot autorPlagiador autores = length (filter (autorPlagioAlOtroAutor bot autorPlagiador) autores)
+
+hizoPlagioPeroAprendio :: Bot -> [Autor] -> Autor -> Bool
+hizoPlagioPeroAprendio bot autores autorQueAprendio= (aCuantosPlagioUnAutor bot autorQueAprendio autores) == 1
+
+hicieronPlagioPeroAprendieron :: Bot -> [Autor] -> [Autor]
+hicieronPlagioPeroAprendieron bot autores = filter (hizoPlagioPeroAprendio bot autores) autores
+
+--8--
+obraInfinita :: Obra -> Obra
+obraInfinita obra = obra {contenido = cycle (contenido obra)}
+
+obraInfinita2 :: Obra
+obraInfinita2 = Obra "Obra con contenido infinito" (repeat 'c') 2024
+
+--si el plagio fuera :
+-- Copia Literal = tiraría error, ya que nunca terminaría de comparar los nombres de las obras
+-- Empiezan Igual = podría comparar los n primeros caracteres entre las obras (gracias a la lazy evaluation) y devolvería true o false segun la longitud de las obras, ya que una vez una obra llegue a tener menor longitud que la otra, deja de evaluar y retorna true.
+-- Le Agregaron Info = podría comparar el comienzo de las obras y retornaría un valor, pero al ser infinita, nunca terminaría de comparar el resto del texto con el de la obra original (no sabemos como terminaría la obra infinita)
