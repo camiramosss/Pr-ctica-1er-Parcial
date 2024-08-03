@@ -455,7 +455,7 @@ personasMayores personas = filter (\persona -> edad persona > 18) personas
 quienesSuperanNMonto personas n = filter (\persona -> sueldo persona > n) personas
 -}
 
-
+{------------------------------------------PARCIAL 6/6/2024------------------------------------
 --1--
 data Autor = Autor {
     nombreAutor :: String,
@@ -585,3 +585,697 @@ obraInfinita2 = Obra "Obra con contenido infinito" (repeat 'c') 2024
 -- Copia Literal = tiraría error, ya que nunca terminaría de comparar los nombres de las obras
 -- Empiezan Igual = podría comparar los n primeros caracteres entre las obras (gracias a la lazy evaluation) y devolvería true o false segun la longitud de las obras, ya que una vez una obra llegue a tener menor longitud que la otra, deja de evaluar y retorna true.
 -- Le Agregaron Info = podría comparar el comienzo de las obras y retornaría un valor, pero al ser infinita, nunca terminaría de comparar el resto del texto con el de la obra original (no sabemos como terminaría la obra infinita)
+-}
+
+{---------------------------------------------PARCIAL HARRY POSTRE--------------------------------
+--1--
+data Postre = Postre{
+    nombrePostre :: String,
+    sabores :: [Sabor],
+    peso :: Number,
+    temperatura :: Number
+} deriving(Show,Eq)
+
+type Sabor = String
+
+bizcochoBorracho :: Postre
+bizcochoBorracho = Postre "Bizcocho Borracho" ["Fruta", "Crema"] 100 25
+
+--2--
+type Hechizo = Postre -> Postre
+
+incendio :: Hechizo
+incendio postre = postre {temperatura = temperatura postre + 1, peso = peso postre + (peso postre * 0.05)}
+
+immobulus :: Hechizo
+immobulus postre = postre {temperatura = 0}
+
+wingardiumLeviosa :: Hechizo
+wingardiumLeviosa postre = postre {sabores = sabores postre ++ ["Concentrado"], peso = peso postre - (peso postre * 0.1)}
+
+diffindo :: Number -> Hechizo
+diffindo n postre = postre {peso = peso postre - (peso postre * n/100)}
+
+riddikulus :: Sabor -> Hechizo
+riddikulus sabor postre = postre {sabores = sabores postre ++ [(inviertePalabra sabor)]}
+
+inviertePalabra :: String -> String
+inviertePalabra palabra = reverse palabra
+
+avadaKedavra :: Hechizo
+avadaKedavra postre = immobulus (postre {sabores = []})
+
+--3--
+estanListosConUnHechizo :: [Postre] -> Hechizo -> Bool
+estanListosConUnHechizo postres hechizo = estanListos (map hechizo postres)
+
+estaListo :: Postre -> Bool
+estaListo postre = (peso postre) > 0 && (sabores postre) /= [] && (temperatura postre) /= 0
+
+estanListos :: [Postre] -> Bool
+estanListos postres = all estaListo postres
+
+
+apicarleUnHechizoAUnPostre :: Postre -> Hechizo -> Postre
+apicarleUnHechizoAUnPostre postre hechizo = hechizo (postre)
+
+aplicarleUnHechizoAVariosPostres :: [Postre] -> Hechizo -> [Postre]
+aplicarleUnHechizoAVariosPostres postres hechizo = map hechizo postres
+
+--4--
+postresListos :: [Postre] -> [Postre]
+postresListos postres = filter (estaListo) postres
+
+postresListosDeLaMesa :: [Postre] -> Hechizo -> [Postre]
+postresListosDeLaMesa postres hechizo = filter estaListo (map hechizo postres)
+
+--5--
+data Mago = Mago {
+    nombre :: String,
+    hechizosAprendidos :: [Hechizo],
+    horrorCruxes :: Number
+} deriving (Show,Eq)
+
+harry :: Mago
+harry = Mago "Harry Potter" [incendio, immobulus, riddikulus "Chocolate"] 10
+
+hermione :: Mago
+hermione = Mago "Hermione Granger" [wingardiumLeviosa, diffindo 50, avadaKedavra] 100
+
+--6--
+practicaConUnHechizo :: Mago -> Postre -> Hechizo -> Mago
+practicaConUnHechizo mago postre hechizo
+ | (hechizo postre) == (avadaKedavra postre) = mago {hechizosAprendidos = hechizosAprendidos mago ++ [hechizo], horrorCruxes = horrorCruxes mago + 1}
+ | otherwise = mago {hechizosAprendidos = hechizosAprendidos mago ++ [hechizo]}
+
+--7--
+suMejorHechizo :: Postre -> Mago -> [Hechizo] -> Hechizo 
+suMejorHechizo postre mago (hechizo1:restoDeHechizos) = foldl (mejorHechizo postre) hechizo1 restoDeHechizos
+
+mejorHechizo :: Postre -> Hechizo -> Hechizo -> Hechizo
+mejorHechizo postre hechizo1 hechizo2
+ | length (sabores (hechizo1(postre))) > length (sabores (hechizo2(postre))) = hechizo1
+ | otherwise = hechizo2
+
+--8--
+listaDePostresInfinitos :: Postre -> [Postre]
+listaDePostresInfinitos postre = cycle [postre]
+
+magoConInfinitosHechizos :: Mago -> Mago
+magoConInfinitosHechizos mago = mago {hechizosAprendidos = repeat avadaKedavra}
+-}
+
+{---------------------------------------------PARCIAL FMS----------------------------------------
+type Palabra = String
+type Verso = String
+type Estrofa = [Verso]
+type Artista = String -- Solamente interesa el nombre
+
+esVocal :: Char -> Bool
+esVocal = flip elem "aeiou"
+
+tieneTilde :: Char -> Bool
+tieneTilde = flip elem "áéíóú"
+
+cumplen :: (a -> b) -> (b -> b -> Bool) -> a -> a -> Bool
+cumplen f comp v1 v2 = comp (f v1) (f v2)
+
+--1--
+vocalesDePalabra :: Palabra -> Palabra
+vocalesDePalabra palabra = filter esVocal palabra
+
+ultimasNVocales :: Number -> Palabra -> Palabra
+ultimasNVocales n palabra = drop (length palabra - n) (vocalesDePalabra palabra)
+
+rimaAsonante :: Palabra -> Palabra -> Bool
+rimaAsonante p1 p2 = ultimasNVocales 1 p1 == ultimasNVocales 1 p2
+
+ultimasNLetras :: Number -> Palabra -> Palabra
+ultimasNLetras n palabra = drop (length palabra - n) palabra
+
+rimaConsonante :: Palabra -> Palabra -> Bool
+rimaConsonante p1 p2 = ultimasNLetras 3 p1 == ultimasNLetras 3 p2
+
+rimanPalabras :: Palabra -> Palabra -> Bool
+rimanPalabras p1 p2
+ | p1 == p2 = False
+ | rimaConsonante p1 p2 = True
+ | rimaAsonante p1 p2 = True
+ | otherwise = False
+
+--2--
+verso1 :: Verso
+verso1 = "no hace falta un programa que genere una canción"
+
+verso2 :: Verso
+verso2 = "para saber que esto se resuelve con una función"
+
+verso3 :: Verso
+verso3 = "funcion linda y divertida si rendiste todas las katas"
+
+porMedioDeRimas :: Verso -> Verso -> Bool
+porMedioDeRimas v1 v2 = last (words v1) == last (words v2)
+
+porMedioDeAnadiplosis :: Verso -> Verso -> Bool
+porMedioDeAnadiplosis v1 v2 = last (words v1) == head (words v2)
+
+rimanVersos :: Verso -> Verso -> Bool
+rimanVersos v1 v2 = porMedioDeRimas v1 v2 || porMedioDeAnadiplosis v1 v2
+-}
+
+{-----------------------------------------------PARCIAL HUBER 2.0------------------------------------------
+--1--
+data Chofer = Chofer {
+    nombreChofer :: String,
+    kilometraje :: Number,
+    viajes :: [Viaje],
+    condicion :: Condicion
+} deriving (Show,Eq)
+
+data Cliente = Cliente {
+    nombreCliente :: String,
+    barrio :: Barrio
+} deriving (Show, Eq)
+
+data Viaje = Viaje {
+    fecha :: String,
+    costo :: Number,
+    cliente :: Cliente
+} deriving (Show, Eq)
+
+type Barrio = String
+type Condicion = Viaje -> Bool
+
+--2--
+cualquierViaje :: Condicion
+cualquierViaje viaje = True
+
+masDe200Pesos :: Condicion
+masDe200Pesos viaje = costo viaje > 200
+
+nombreConMasDeNLetras :: Number -> Condicion
+nombreConMasDeNLetras n viaje = length (nombreCliente (cliente viaje)) > n
+
+noViveEnUnaZonaDeterminada :: Barrio -> Condicion
+noViveEnUnaZonaDeterminada barrioDeterminado viaje = barrio (cliente viaje) /= barrioDeterminado
+
+--3--
+lucas :: Cliente
+lucas = Cliente "Lucas" "Victoria"
+
+daniel :: Chofer
+daniel = Chofer "Daniel" 23500 [viaje1] (noViveEnUnaZonaDeterminada "Olivos")
+
+viaje1 :: Viaje
+viaje1 = Viaje "20/04/2017" 150 lucas
+
+alejandra :: Chofer
+alejandra = Chofer "Alejandra" 180000 [] cualquierViaje
+
+--4--
+puedeTomarViaje :: Viaje -> Chofer -> Bool
+puedeTomarViaje viaje chofer = (condicion chofer) viaje == True
+
+--5--
+liquidacionDeChofer :: Chofer -> Number
+liquidacionDeChofer chofer = sum (map costo (viajes chofer))
+
+--6--
+quienesPuedenRealizarViaje :: Viaje -> [Chofer] -> [Chofer]
+quienesPuedenRealizarViaje viaje choferes = filter (puedeTomarViaje viaje) choferes
+
+quienesPuedenRealizarViaje' :: [Chofer] -> Viaje -> [Chofer]
+quienesPuedenRealizarViaje' choferes viaje = filter (\chofer -> puedeTomarViaje viaje chofer) choferes
+
+
+choferConMenosViajes :: Chofer -> Chofer -> Chofer
+choferConMenosViajes chofer1 chofer2
+ | length (viajes chofer1) < length (viajes chofer2) = chofer1
+ | otherwise = chofer2
+
+choferConMenosExperiencia :: [Chofer] -> Chofer
+choferConMenosExperiencia choferes = foldl1 choferConMenosViajes choferes
+
+--supongo que quien realiza el viaje es de los que lo pueden realizar, el que tiene menor experiencia
+realizaViaje :: Viaje -> [Chofer] -> Chofer
+realizaViaje viaje choferes = choferConMenosExperiencia (quienesPuedenRealizarViaje viaje choferes)
+
+
+efectuarViaje :: Viaje -> Chofer -> Chofer
+efectuarViaje viaje chofer = chofer {viajes = viajes chofer ++ [viaje] }
+
+--7--
+nitoInfy :: Chofer
+nitoInfy = Chofer "Nito Infy" 70000 (repetirViaje viajeInfinito) (nombreConMasDeNLetras 2)
+
+viajeInfinito :: Viaje
+viajeInfinito = Viaje "11/3/2017" 50 lucas
+
+repetirViaje :: Viaje -> [Viaje]
+repetirViaje viaje = viaje : repetirViaje viaje
+
+-- no se puede calcular la liquidacion de nito ya que nunca se termina de sumar el costo de los viajes (al ser infinitos).
+-- sí podemos saber si Nito puede tomar un viaje con Lucas de $ 500 el 2/5/2017, ya que con solo cumplir la condicion que pide nito (que el nombre de su cliente tenga al menos 2 letras) ya nos da una respuesta : sí puede.
+-}
+
+{------------------------------------------------PARCIAL STAR WARS-----------------------------------------
+--1--
+data Nave = Nave {
+    nombre :: String,
+    durabilidad :: Number,
+    escudo :: Number,
+    ataque :: Number,
+    poder :: Poder
+} deriving (Show, Eq)
+
+type Poder = Nave -> Nave
+
+tieFighter :: Nave
+tieFighter = Nave "Tie Fighter" 200 100 50 movimientoTurbo
+
+xWing :: Nave
+xWing = Nave "X Wing" 300 150 100 reparacionEmergencia
+
+naveDeDarthVader :: Nave
+naveDeDarthVader = Nave "Nave de Darth Vader" 500 300 200 movimientoSuperTurbo
+
+milleniumFalcon :: Nave
+milleniumFalcon = Nave "Millenium Falcon" 1000 500 50 reparacionEmergenciaEIncrementoDeEscudo
+
+movimientoTurbo :: Poder
+movimientoTurbo nave = nave {ataque = ataque nave + 25}
+
+reparacionEmergencia :: Poder
+reparacionEmergencia nave = nave {durabilidad = durabilidad nave + 50, ataque = ataque nave - 30}
+
+movimientoSuperTurbo :: Poder
+movimientoSuperTurbo nave = movimientoTurbo(movimientoTurbo(movimientoTurbo(nave {durabilidad = durabilidad nave - 45})))
+
+reparacionEmergenciaEIncrementoDeEscudo :: Poder
+reparacionEmergenciaEIncrementoDeEscudo nave = reparacionEmergencia (nave {escudo = escudo nave + 100})
+
+--2--
+type Flota = [Nave]
+
+durabilidadTotal :: Flota -> Number
+durabilidadTotal flota = sum (map durabilidad flota)
+
+--3--
+naveFueAtacada :: Nave -> Nave -> Nave
+naveFueAtacada naveAtacante naveAtacada
+ | (escudo (activaSuPoder naveAtacada)) < (ataque(activaSuPoder naveAtacante)) = naveAtacada {durabilidad = durabilidad naveAtacada - (ataque naveAtacante - escudo naveAtacada)}
+ | otherwise = naveAtacada
+
+activaSuPoder :: Nave -> Nave
+activaSuPoder nave = (poder nave) nave
+
+--4--
+fueraDeCombate :: Nave -> Bool
+fueraDeCombate nave = durabilidad nave == 0
+
+--5--
+type Estrategia = Flota -> Flota
+
+naveDebil :: Nave -> Bool
+naveDebil nave = escudo nave < 200
+
+navesDebiles :: Estrategia
+navesDebiles flota = filter naveDebil flota
+
+
+naveConCiertaPeligrosidad :: Number -> Nave -> Bool
+naveConCiertaPeligrosidad n nave = ataque nave > n
+
+navesConCiertaPeligrosidad :: Number -> Estrategia
+navesConCiertaPeligrosidad n flota = filter (naveConCiertaPeligrosidad n) flota
+
+
+naveQueQuedarianFueraDeCombate :: Nave -> Nave -> Bool
+naveQueQuedarianFueraDeCombate naveAtacante naveAtacada = durabilidad (naveFueAtacada naveAtacante naveAtacada) == 0
+
+navesQueQuedarianFueraDeCombate :: Nave -> Estrategia
+navesQueQuedarianFueraDeCombate nave flota = filter (naveQueQuedarianFueraDeCombate nave) flota
+
+
+venganzaNula :: Nave -> Bool
+venganzaNula nave = ataque nave < 10
+
+venganzaNulaDeUnaFlota :: Estrategia
+venganzaNulaDeUnaFlota flota = filter venganzaNula flota
+
+
+comoQuedaFlotaEnemiga :: Estrategia -> Nave -> Flota -> Flota
+comoQuedaFlotaEnemiga estrategia nave flota = map (naveFueAtacada nave) (misionSorpresa estrategia flota)
+
+misionSorpresa :: Estrategia -> Flota -> Flota
+misionSorpresa estrategia flota = estrategia flota
+
+--6--
+bajaDurabilidadTotal :: Estrategia -> Estrategia -> Nave -> Flota -> Estrategia
+bajaDurabilidadTotal estrategia1 estrategia2 nave flota
+ | durabilidadTotal (comoQuedaFlotaEnemiga estrategia1 nave flota) < durabilidadTotal (comoQuedaFlotaEnemiga estrategia2 nave flota) = estrategia1
+ | otherwise = estrategia2
+
+llevarAdelanteMision :: Estrategia -> Estrategia -> Nave -> Flota -> Flota
+llevarAdelanteMision estrategia1 estrategia2 nave flota = misionSorpresa (bajaDurabilidadTotal estrategia1 estrategia2 nave flota) flota
+
+--7--
+flotaInfinita :: Nave -> Flota
+flotaInfinita nave = nave:flotaInfinita nave
+
+-- no es posible determinar su durabilidad total ya que nunca terminaria de sumar la durabilidad de todas las naves (al ser infinito)
+-- cuando se llega a cabo una mision sobre ella, nos tira error, ya que intenta devolver una flota infinita tambien
+-}
+
+{-------------------------------------------PARCIAL ESCUELITA DE THANOS-----------------------------------------
+--1--
+data Guantelete = Guantelete {
+    material :: String,
+    gemas :: [Gema]
+} deriving (Show, Eq)
+
+data Personaje = Personaje {
+    nombre :: String,
+    edad :: Number,
+    planeta :: Planeta,
+    energia :: Number,
+    habilidades :: [Habilidad]
+} deriving (Show, Eq)
+
+type Habilidad = String
+type Planeta = String
+
+data Universo = Universo {
+  personajes :: [Personaje]  
+} deriving (Show,Eq)
+
+
+guanteleteCompleto :: Guantelete
+guanteleteCompleto = Guantelete "uru" [laMente 1, (elAlma "telequinesis"), (elEspacio "tierra"), elPoder , elTiempo, (gemaLoca elPoder)]
+
+
+ironMan :: Personaje
+ironMan = Personaje "Iron Man" 50 "Tierra" 10 ["ingenieria", "tecnologia"]
+
+drStrange :: Personaje
+drStrange = Personaje "Doctor Strange" 40 "Luna" 6 ["telequinesis", "telepatia"]
+
+groot :: Personaje
+groot = Personaje "This is Groot" 28 "Venus" 5 ["buena onda"]
+
+wolverine :: Personaje
+wolverine = Personaje "Wolverine" 42 "Tierra" 8 ["garras filosas", "trepar arboles"]
+
+viudaNegra :: Personaje
+viudaNegra = Personaje "Viuda Negra" 30 "Luna" 7 ["poder aracnido", "telequinesis"]
+
+
+universo1 :: Universo
+universo1 = Universo [ironMan, drStrange, groot, wolverine]
+
+universo2 :: Universo
+universo2 = Universo [ironMan, drStrange, groot, wolverine, viudaNegra]
+
+
+chasquidoDeUnUniverso :: Guantelete -> Universo -> Universo
+chasquidoDeUnUniverso guantelete universo
+ | length (gemas guantelete) == 6 = universo {personajes = take ((personajesDeUnUniverso universo) `div` 2) (personajes universo)}
+ | otherwise = universo
+
+personajesDeUnUniverso :: Universo -> Number
+personajesDeUnUniverso universo = length (personajes universo)
+
+--2--
+aptoParaPendex :: Universo -> Bool
+aptoParaPendex universo = any esPendex (personajes universo)
+
+esPendex :: Personaje -> Bool
+esPendex personaje = (edad personaje) < 45
+
+
+energiaTotal :: Universo -> Number
+energiaTotal universo = sum (map energia (personajesConMasDeUnaHabilidad universo))
+
+personajesConMasDeUnaHabilidad :: Universo -> [Personaje]
+personajesConMasDeUnaHabilidad universo = filter tieneMasDeUnaHabilidad (personajes universo)
+
+tieneMasDeUnaHabilidad :: Personaje -> Bool
+tieneMasDeUnaHabilidad personaje = length (habilidades personaje) > 1
+
+--3--
+type Gema = Personaje -> Personaje
+
+laMente :: Number -> Gema
+laMente n personaje = personaje {energia = energia personaje - n}
+
+
+elAlma :: Habilidad -> Gema
+elAlma habilidad personaje = personaje {habilidades = eliminarHabilidad habilidad (habilidades personaje), energia = energia personaje - 10}
+
+eliminarHabilidad :: Habilidad -> [Habilidad] -> [Habilidad]
+eliminarHabilidad habilidad (habilidad1:restoDeHabilidades)
+ | habilidad == habilidad1 = restoDeHabilidades
+ | otherwise = habilidad1 : eliminarHabilidad habilidad restoDeHabilidades
+
+
+elEspacio :: Planeta -> Gema
+elEspacio planetaNuevo personaje = personaje {planeta = planetaNuevo, energia = energia personaje - 20}
+
+
+elPoder :: Gema
+elPoder personaje 
+ | tiene2HabilidadesOMenos personaje = personaje {energia = 0, habilidades = []}
+ | otherwise = personaje {energia = 0}
+
+tiene2HabilidadesOMenos :: Personaje -> Bool
+tiene2HabilidadesOMenos personaje = length (habilidades personaje) <= 2
+
+
+elTiempo :: Gema
+elTiempo personaje = personaje {energia = energia personaje - 50, edad = mitadNumeroMayorA18 (edad personaje)}
+
+mitadNumeroMayorA18 :: Number -> Number
+mitadNumeroMayorA18 n
+ | n <= 36 = 18
+ | n > 36 = n `div` 2
+
+
+gemaLoca :: Gema -> Gema
+gemaLoca gema personaje = gema(gema personaje)
+
+--4--
+guanteleteDeGoma :: Guantelete
+guanteleteDeGoma = Guantelete "Goma" [elTiempo, elAlma "usar Mjolnir", gemaLoca (elAlma "programacion en Haskell")]
+
+--5--
+utilizar :: [Gema] -> Personaje -> Personaje
+utilizar gemas personaje = foldl (\personaje gema -> usarGema gema personaje) personaje gemas
+--debemos aplicar lambda porque la funcion foldl acepta funciones de tipo (b -> a -> b), mientras que usarGema es del tipo (b -> a -> a)
+
+utilizarr :: [Gema] -> Personaje -> Personaje
+utilizarr gemas personaje = foldr usarGema personaje gemas
+--funciona con foldr ya que la funcion "usarGema" es de tipo (b -> a -> a), donde a es el acumulador y b un elemento de la lista
+
+usarGema :: Gema -> Personaje -> Personaje
+usarGema gema personaje = gema personaje
+
+--6--
+gemaMasPoderosaDeUnaListaDeGemas :: [Gema] -> Personaje -> Gema
+gemaMasPoderosaDeUnaListaDeGemas [gema] _ = gema
+gemaMasPoderosaDeUnaListaDeGemas gemas personaje = foldl (\gema1 gema2 -> esMasPoderosa gema1 gema2 personaje) (head gemas) (tail gemas)
+
+esMasPoderosa :: Gema -> Gema -> Personaje -> Gema
+esMasPoderosa gema1 gema2 personaje
+ | energia (gema1 personaje) < energia (gema2 personaje) = gema1
+ | otherwise = gema2
+
+--usando recursividad:
+gemaMasPoderosaDeUnaListaDeGemas' :: [Gema] -> Personaje -> Gema
+gemaMasPoderosaDeUnaListaDeGemas' [gema] _ = gema
+gemaMasPoderosaDeUnaListaDeGemas' (gema1:gema2:restoDeGemas) personaje
+    | energia (gema1 personaje) < energia (gema2 personaje) = gemaMasPoderosaDeUnaListaDeGemas' (gema1:restoDeGemas) personaje
+    | otherwise = gemaMasPoderosaDeUnaListaDeGemas' (gema2:restoDeGemas) personaje
+
+--7--
+infinitasGemas :: Gema -> [Gema]
+infinitasGemas gema = gema:(infinitasGemas gema)
+
+guanteleteDeLocos :: Guantelete
+guanteleteDeLocos = Guantelete "vesconite" (infinitasGemas elTiempo)
+
+usoLasTresPrimerasGemas :: Guantelete -> Personaje -> Personaje
+usoLasTresPrimerasGemas guantelete = (utilizar . take 3. gemas) guantelete
+
+-- "gemaMasPoderosa wolverine guanteleteDeLocos" = no se puede, sea quien sea el personaje ya que nunca terminaria de comparar las gemas (al ser infinitas).
+-- "usoLasTresPrimerasGemas guanteleteDeLocos punisher" = sí se puede ejecutar, ya que gracias a la lazy evaluation, haskell toma las primeras 3 gemas que pide la funcion "usoLasTresPrimerasGemas" y deja de ejecutar la lista infinita, dando un resultado para los elementos tomados.
+-}
+
+{--------------------------------------------PARCIAL VACACIONES----------------------------------------
+data Turista = Turista {
+    cansancio :: Number,
+    stress :: Number,
+    estaViajandoSolo :: Bool,
+    idiomas :: [String]
+} deriving (Show, Eq)
+
+type Excursion = Turista -> Turista
+
+
+irALaPlaya :: Excursion
+irALaPlaya personaje
+ | estaViajandoSolo personaje = personaje {cansancio = cansancio personaje - 5}
+ | otherwise = personaje {stress = stress personaje - 1}
+
+apreciarElementoDelPaisaje :: String -> Excursion
+apreciarElementoDelPaisaje elemento turista = turista {stress = stress turista - (length elemento)}
+
+hablarIdioma :: String -> Excursion
+hablarIdioma idioma turista = turista {idiomas = idiomas turista ++ [idioma], estaViajandoSolo = False}
+
+caminarNMinutos :: Number -> Excursion
+caminarNMinutos n turista = turista {cansancio = cansancio turista + (n/4), stress = stress turista - (n/4)}
+
+paseoEnBarco :: Marea -> Excursion
+paseoEnBarco marea turista
+ | marea == Fuerte = turista {stress = stress turista + 6, cansancio = cansancio turista + 10}
+ | marea == Moderada = turista
+ | marea == Tranquila = hablarIdioma "Aleman" (apreciarElementoDelPaisaje "mar" (caminarNMinutos 10 turista))
+
+data Marea = Fuerte | Moderada | Tranquila deriving (Show, Eq)
+
+--2--
+ana :: Turista
+ana = Turista 0 21 True ["español"]
+
+beto :: Turista
+beto = Turista 15 15 False ["aleman"]
+
+cathi :: Turista
+cathi = Turista 15 15 False ["aleman"]
+
+joako :: Turista
+joako = Turista 5 1 False ["español", "ingles", "portugues","japones(???"]
+
+cami :: Turista
+cami = Turista 5 2 False ["español", "inglés"]
+
+milo :: Turista
+milo = Turista 0 0 True ["gatuno"]
+
+--3--
+turistaHaceExcursion :: Excursion -> Turista -> Turista
+turistaHaceExcursion excursion turista = baja10percentDeStress (excursion (turista))
+
+baja10percentDeStress :: Turista -> Turista
+baja10percentDeStress turista = turista {stress = stress turista - (stress turista * 0.1)}
+
+
+deltaSegun :: (a -> Number) -> a -> a -> Number
+deltaSegun f algo1 algo2 = f algo1 - f algo2
+
+deltaExcursionSegun :: (Turista -> Number) -> Turista -> Excursion -> Number
+deltaExcursionSegun f turista excursion = (f (turista)) - (f (excursion (turista)))
+
+
+cansancioDeTurista :: Turista -> Number
+cansancioDeTurista turista = cansancio turista
+
+stressDeUnTurista :: Turista -> Number
+stressDeUnTurista turista = stress turista
+
+cantidadDeIdiomasTurista :: Turista -> Number
+cantidadDeIdiomasTurista turista = length (idiomas turista)
+
+
+esEducativa :: Turista -> Excursion -> Bool
+esEducativa turista excursion = deltaExcursionSegun cantidadDeIdiomasTurista turista excursion >= 1
+
+excursionesMasDesestresantes :: Turista -> [Excursion] -> [Excursion]
+excursionesMasDesestresantes turista excursiones = filter (reduceAlMenos3DeStress turista) excursiones
+
+reduceAlMenos3DeStress :: Turista -> Excursion -> Bool
+reduceAlMenos3DeStress turista excursion = (stress (turista) - stress (excursion(turista))) <= 3
+
+
+esMasDesesestresante :: Turista -> Excursion -> Excursion -> Excursion
+esMasDesesestresante turista e1 e2
+ | stress (e1 (turista)) < stress (e2 (turista)) = e1
+ | otherwise = e2
+
+excursionMasDesestresante :: Turista -> [Excursion] -> Excursion
+excursionMasDesestresante _ [excursion] = excursion
+excursionMasDesestresante turista (e1:e2:excursiones) 
+ | stress (e1 (turista)) < stress (e2 (turista)) = excursionMasDesestresante turista (e1:excursiones)
+ | otherwise = excursionMasDesestresante turista (e2:excursiones)
+
+--4--
+type Tour = [Excursion]
+
+tourCompleto :: Tour
+tourCompleto = [hablarIdioma "malmacquiano", caminarNMinutos 40, apreciarElementoDelPaisaje "cascada", caminarNMinutos 20]
+
+ladoB :: Excursion -> Tour
+ladoB excursion = [caminarNMinutos 120, excursion, paseoEnBarco Tranquila]
+
+islaVecina :: Marea -> Excursion -> Tour
+islaVecina marea excursion
+ | marea == Fuerte = [paseoEnBarco Fuerte, excursion, apreciarElementoDelPaisaje "lago", paseoEnBarco Fuerte]
+ | otherwise = [paseoEnBarco marea, excursion, irALaPlaya, paseoEnBarco marea]
+
+-- un turista realiza el tour completo
+tourCompleto' :: Turista -> Turista
+tourCompleto' = (hablarIdioma "malacquiano") . (caminarNMinutos 40) . (apreciarElementoDelPaisaje "cascada") . (caminarNMinutos 20 )
+
+
+haceTour :: Tour -> Turista -> Turista
+haceTour excursiones turista = foldr turistaHaceExcursion (aumentaStressSegunTour excursiones turista) excursiones
+-- foldr ya que la funcion turistaHaceExcursion es de tipo (b -> a -> a) donde a es el acumulador
+
+cuantoStressAumentaSegunTour :: Tour -> Number
+cuantoStressAumentaSegunTour excursiones = length excursiones
+
+aumentaStressSegunTour :: Tour -> Turista -> Turista
+aumentaStressSegunTour excursiones turista = turista {stress = stress turista + (cuantoStressAumentaSegunTour excursiones)}
+
+
+excursionDesestresante :: Turista -> Excursion -> Bool
+excursionDesestresante turista excursion = stress (excursion(turista)) < stress turista
+
+excursionesDesestresantes :: Turista -> Tour -> [Excursion]
+excursionesDesestresantes turista tour = filter (excursionDesestresante turista) tour
+
+dejaAlTuristaAcompañado ::Turista -> Excursion -> Bool
+dejaAlTuristaAcompañado turista excursion
+ | estaViajandoSolo (excursion turista) == False = True
+ | otherwise = False
+
+tourConvincente :: Turista -> Tour -> Bool
+tourConvincente turista tour = any (dejaAlTuristaAcompañado turista) (excursionesDesestresantes turista tour)
+
+existeTourConvincente :: Turista -> [Tour] -> Bool
+existeTourConvincente turista tours = any (tourConvincente turista) tours
+
+toursConvincentes :: Turista -> [Tour] -> [Tour]
+toursConvincentes turista tours = filter (tourConvincente turista) tours
+
+
+
+efectividad :: Tour -> [Turista] -> Number
+efectividad tour = sum . map (espiritualidadAportada tour) . filter (flip tourConvincente tour)
+
+espiritualidadAportada :: Tour -> Turista -> Number
+espiritualidadAportada tour = negate . deltaRutina tour
+
+deltaRutina :: Tour -> Turista -> Number
+deltaRutina tour turista = deltaSegun nivelDeRutina (haceTour tour turista) turista
+
+nivelDeRutina :: Turista -> Number
+nivelDeRutina turista = cansancio turista + stress turista
+
+--5--
+tourConInfPlayas :: Excursion -> Tour
+tourConInfPlayas excursion = irALaPlaya : (tourConInfPlayas irALaPlaya)
+
+excursionNumeroN :: Number -> Tour -> Excursion
+excursionNumeroN n excursiones = excursiones !! n
+--}
